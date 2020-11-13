@@ -79,6 +79,7 @@ class General(commands.Cog):
     async def restart(self, ctx: commands.Context):
         """Make the bot logout"""
         await ctx.send("Restarting...")
+        await self.bot.change_presence(activity=discord.Game(name="Restarting..."))
         self.bot.logger.info(f"Shutting down {name}")
         await self.bot.close()
 
