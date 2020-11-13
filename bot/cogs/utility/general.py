@@ -101,7 +101,10 @@ class General(commands.Cog):
     @redis_g.command(name="get")
     async def redis_get(self, ctx: commands.Context, key: str):
         data = await self.bot.redis.execute("get", "ctf" + key)
-        await ctx.send(f"OK: {data.decode('utf-8')}")
+        if data:
+            await ctx.send(f"OK: {data.decode('utf-8')}")
+            return
+        await ctx.send(f"NOTOK: Query returned None.")
 
     @commands.Cog.listener()
     async def on_ready(self):
