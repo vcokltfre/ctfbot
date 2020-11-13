@@ -137,7 +137,7 @@ class General(commands.Cog):
             await self.bot.change_presence(activity=discord.Game(name="Restarting..."))
             await self.bot.logout()
 
-    @tasks.loop(seconds=30)
+    @tasks.loop(seconds=15)
     async def website_status_check(self):
         async with aiohttp.ClientSession() as sess:
             resp = await sess.get("https://ctf.vcokltf.re/ping", headers={"User-Agent": "discordbot"})
