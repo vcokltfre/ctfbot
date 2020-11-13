@@ -111,7 +111,11 @@ class General(commands.Cog):
     @redis_g.command(name="raw")
     async def redis_raw(self, ctx: commands.Context, *args):
         args = list(args)
-        data = await self.bot.redis.execute(args.pop(0), *args)
+        try:
+            data = await self.bot.redis.execute(args.pop(0), *args)
+        except Exception as e:
+            await ctx.send(str(e))
+            return
         await ctx.send(str(data))
 
     @commands.Cog.listener()
