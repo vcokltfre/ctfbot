@@ -26,7 +26,11 @@ class Database(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         if not hasattr(self.bot, "pool"):
-            self.bot.pool = await aiomysql.create_pool(**maria, loop=asyncio.get_event_loop())
+            try:
+                self.bot.pool = await aiomysql.create_pool(**maria, loop=asyncio.get_event_loop())
+                self.bot.logger.info("MariaDB Connected!")
+            except Exception as e:
+                self.bot.logger.error(f"MariaDB: {e}")
 
     @commands.command(name="db")
     @is_dev()
