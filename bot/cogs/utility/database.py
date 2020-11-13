@@ -120,7 +120,7 @@ class Database(commands.Cog):
         if add or remove:
             if add: await user.add_roles(*add)
             if remove: await user.remove_roles(*remove)
-            self.bot.logger.info(f"AutoRole({user}): Added: {', '.join([role.name for role in add])} | Removed: {', '.join([role.name for role in remove])}")
+            self.bot.logger.info(f"AutoRole({user}):\n```Added: {', '.join([role.name for role in add])}\nRemoved: {', '.join([role.name for role in remove])}```")
 
 
 def setup(bot: Bot):
