@@ -11,7 +11,7 @@ class Bot(commands.Bot):
     """A subclassed version of commands.Bot"""
 
     def __init__(self, debug=False, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(command_prefix=self.get_prefix, *args, **kwargs)
         self.debug = debug
         self.logger = Logger(name, log_level, log_type)
         self.logger.info(f"Starting {name}")
@@ -35,17 +35,19 @@ class Bot(commands.Bot):
         additional = "" if not self.debug else " (DEBUG)"
         self.logger.info(f"Cog loading complete! (Total: {success + fail} | Loaded: {success} | Failed: {fail}){additional}")
 
+    async def get_prefix(self, message):
+        if self.user.id == 776592512562364466:
+            return "!"
+        return "$"
+
     async def on_error(self, event: str, **kwargs):
         self.logger.error(f"Runtime error: {event}\n{traceback.format_exc(limit=1750)}")
         traceback.print_exc()
 
 
-def run(cogs: list, debug=False, prefix=None, help_command=None):
-    if prefix is None:
-        prefix = ["!"]
+def run(cogs: list, debug=False, help_command=None):
     bot = Bot(
         debug=debug,
-        command_prefix=prefix,
         max_messages=10000,
         help_command=help_command,
         intents=discord.Intents.all()
