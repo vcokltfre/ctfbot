@@ -108,6 +108,11 @@ class General(commands.Cog):
             return
         await ctx.send(f"NOTOK: Query returned None.")
 
+    @redis_g.command(name="raw")
+    async def redis_raw(self, ctx: commands.Context, *args):
+        data = await self.bot.redis.execute(args.pop(0), *args)
+        await ctx.send(str(data))
+
     @commands.Cog.listener()
     async def on_ready(self):
         self.bot.logger.info(f"{name} has started")
