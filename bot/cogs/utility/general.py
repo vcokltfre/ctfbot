@@ -1,7 +1,8 @@
 import time
 import aioredis
+import aiohttp
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from bot.bot import Bot
 from bot.utils.checks import is_dev
@@ -123,6 +124,7 @@ class General(commands.Cog):
     async def on_ready(self):
         self.bot.logger.info(f"{name} has started")
         await self.bot.change_presence(activity=discord.Game(name=f"Online! | {round(self.bot.latency * 1000, 3)}ms"))
+        self.website_status_check.start()
 
         if not hasattr(self.bot, "redis"):
             self.bot.redis = await aioredis.create_connection("redis://localhost:6379")
@@ -133,6 +135,18 @@ class General(commands.Cog):
             self.bot.logger.info("Auto restarting due to git push event.")
             await self.bot.change_presence(activity=discord.Game(name="Restarting..."))
             await self.bot.logout()
+
+    @tasks.loop(seconds=30)
+    async def website_status_check(self):
+        async with aiohttp.ClientSession() as sess:
+            resp = await sess.get("https://ctf.vcokltf.re/ping")
+            try:
+                data = await resp.json()
+                self.bot.logger.info("WebStatus: Success!")
+                await self.bot.change_presence(activity=discord.Game(name=f"Online! | {round(self.bot.latency * 1000, 3)}ms"))
+            except:
+                self.bot.logger.info("WebStatus: Failed!")
+                await self.bot.change_presence(activity=discord.Game(name="WEBSITE DOWN"))
 
 
 def setup(bot: Bot):
