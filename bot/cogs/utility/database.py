@@ -1,5 +1,6 @@
 import asyncio
 import aiomysql
+import discord
 from aioredis.pubsub import Receiver
 from discord.ext import commands
 
@@ -26,11 +27,18 @@ class Database(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         if not hasattr(self.bot, "pool"):
-            try:
-                self.bot.pool = await aiomysql.create_pool(**maria, loop=asyncio.get_event_loop())
-                self.bot.logger.info("MariaDB Connected!")
-            except Exception as e:
-                self.bot.logger.error(f"MariaDB: {e}")
+            for i in range(3):
+                try:
+                    self.bot.pool = await aiomysql.create_pool(**maria, loop=asyncio.get_event_loop())
+                    self.bot.logger.info("MariaDB Connected!")
+                    break
+                except Exception as e:
+                    if i < 2:
+                        self.bot.logger.error(f"MariaDB: {e}")
+                    else:
+                        self.bot.logger.critical("MariaDB refused to connect 3 times. Restart.")
+                        await self.bot.change_presence(activity=discord.Game(name="Restarting..."))
+                        await self.bot.logout()
 
     @commands.command(name="db")
     @is_dev()
