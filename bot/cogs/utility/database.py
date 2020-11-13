@@ -24,6 +24,7 @@ class Database(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         if not hasattr(self.bot, "pool"):
+            await asyncio.sleep(1)
             for i in range(3):
                 try:
                     self.bot.pool = await aiomysql.create_pool(**maria, loop=asyncio.get_event_loop(), autocommit=True)
