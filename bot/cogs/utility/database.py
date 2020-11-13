@@ -11,6 +11,7 @@ from bot.utils.checks import is_dev
 from bot.utils.roles import get_add_remove, get_rolemap
 from bot.utils.const import GET_UR, GET_ROLES
 from bot.utils.utils import argparse
+from bot.utils.paginate import paginate
 from config.config import maria
 
 
@@ -52,8 +53,11 @@ class Database(commands.Cog):
                     await ctx.send(r)
                     return
                 r = await cur.fetchall()
-                text = "```py\n" + '\n'.join('{}: {}'.format(*k) for k in enumerate(r)) + "```"
-                await ctx.send(text[:1999])
+                lines = ['{}: {}'.format(*k) for k in enumerate(r)]
+                pages = paginate(lines)
+                n = len(pages) if len(pages) <= 5 else 5
+                for i in range(n):
+                    await ctx.send(pages[i])
 
     @tasks.loop(seconds=60)
     async def update_roles_task(self):
