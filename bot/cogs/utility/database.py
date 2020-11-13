@@ -22,9 +22,16 @@ class Database(commands.Cog):
     @commands.command(name="db")
     @is_dev()
     async def db(self, ctx: commands.Context, *, query: str):
+        desc = False
+        if "--desc" in query:
+            query = query.replace("--desc", "")
+            desc = True
         async with self.bot.pool.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(query)
+                if desc:
+                    await ctx.send(cur.description)
+                    return
                 (r,) = await cur.fetchone()
                 await ctx.send(r)
 
