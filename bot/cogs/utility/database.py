@@ -10,7 +10,7 @@ from collections import defaultdict
 from bot.bot import Bot
 from bot.utils.checks import is_dev
 from bot.utils.roles import get_add_remove, get_rolemap
-from bot.utils.const import GET_UR, GET_ROLES
+from bot.utils.const import GET_UR, GET_ROLES, LEADERBOARD
 from bot.utils.utils import argparse
 from bot.utils.paginate import paginate
 from config.config import maria
@@ -121,6 +121,30 @@ class Database(commands.Cog):
             if add: await user.add_roles(*add)
             if remove: await user.remove_roles(*remove)
             self.bot.logger.info(f"AutoRole({user}):\n```Added: {', '.join([role.name for role in add])}\nRemoved: {', '.join([role.name for role in remove])}```")
+
+    @commands.command(name="leaderboard", aliases=["lb"])
+    async def lbcommand(self, ctx):
+        guild = get(self.bot.guilds, id=776588050276024371)
+
+        async with self.bot.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(LEADERBOARD)
+                users = await cur.fetchall()
+
+        valid_users = []
+        for user in users:
+            points = int(user['points'])
+            user = get(guild.members, id=int(user['discord_id']))
+            if user and len(valid_users) < 10:
+                name = str(user)
+                if user.id == ctx.author.id:
+                    name += " <-- You"
+                valid_users.append((name, points))
+
+        header = ["User", "Score"]
+        lines = tabulate.tabulate(valid_users, header, tablefmt='simple', showindex=True)
+        text = "```" + lines + "```"
+        await ctx.send(text)
 
 
 def setup(bot: Bot):

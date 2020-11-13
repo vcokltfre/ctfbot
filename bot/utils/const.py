@@ -1,2 +1,3 @@
 GET_UR = "SELECT u.id, u.discord_id, L.discord_role FROM ( SELECT User.id, User.discord_id, SUM(C.points) AS points FROM User LEFT JOIN ChallengeComplete CC ON User.id = CC.user LEFT JOIN Challenge C ON CC.challenge = C.id GROUP BY User.id ) u LEFT JOIN Level L ON L.points_required <= u.points"
 GET_ROLES = "SELECT discord_role FROM Level;"
+LEADERBOARD = " SELECT User.discord_id, ( SELECT COALESCE(SUM(C.points), 0) FROM ChallengeComplete CC INNER JOIN Challenge C ON C.id = CC.challenge WHERE CC.user = User.id ) points FROM User ORDER BY points DESC, User.created_at ASC"
