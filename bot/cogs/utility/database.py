@@ -13,7 +13,7 @@ from bot.utils.roles import get_add_remove, get_rolemap
 from bot.utils.const import GET_UR, GET_ROLES, LEADERBOARD
 from bot.utils.utils import argparse
 from bot.utils.paginate import paginate
-from config.config import maria
+from config.config import maria, dev_ids
 
 
 class Database(commands.Cog):
@@ -137,6 +137,8 @@ class Database(commands.Cog):
             user = get(guild.members, id=int(user['discord_id']))
             if user and len(valid_users) < 10:
                 name = str(user)
+                if user.id in dev_ids:
+                    name += "*"
                 if user.id == ctx.author.id:
                     name += " <-- You"
                 valid_users.append((name, points))
