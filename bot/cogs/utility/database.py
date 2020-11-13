@@ -36,6 +36,7 @@ class Database(commands.Cog):
                         self.bot.logger.critical("MariaDB refused to connect 3 times. Restart.")
                         await self.bot.change_presence(activity=discord.Game(name="Restarting..."))
                         await self.bot.logout()
+                await asyncio.sleep(2)
         self.update_roles_task.start()
 
     @commands.command(name="db")
