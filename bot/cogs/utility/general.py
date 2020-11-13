@@ -6,6 +6,8 @@ from bot.bot import Bot
 from bot.utils.checks import is_dev
 from config.config import name
 
+RESTART = (True, 776630056688287745)
+
 
 class General(commands.Cog):
     """A general purpose cog for tasks such as cog loading"""
@@ -112,6 +114,12 @@ class General(commands.Cog):
 
         if not hasattr(self.bot, "redis"):
             self.bot.redis = await aioredis.create_connection("redis://localhost:6379")
+
+    @commands.Cog.listener()
+    async def on_message(self, m):
+        if RESTART[0] and m.channel.id == RESTART[1]:
+            self.bot.logger.info("Auto restarting due to git push event.")
+            await self.bot.logout()
 
 
 def setup(bot: Bot):
