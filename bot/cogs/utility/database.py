@@ -47,6 +47,7 @@ class Database(commands.Cog):
         async with self.bot.pool.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(query)
+                await conn.commit()
                 if "desc" in args:
                     await ctx.send(cur.description)
                     return
