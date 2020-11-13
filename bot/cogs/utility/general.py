@@ -141,10 +141,11 @@ class General(commands.Cog):
     async def website_status_check(self):
         async with aiohttp.ClientSession() as sess:
             resp = await sess.get("https://ctf.vcokltf.re/ping", headers={"User-Agent": "discordbot"})
+            t = int(resp['time'].replace("H", "1").replace("h", "0"))
             try:
                 data = await resp.json()
                 self.bot.logger.debug("WebStatus: Success!")
-                await self.bot.change_presence(activity=discord.Game(name=f"Online! | {round(self.bot.latency * 1000, 3)}ms"), status=discord.Status.online)
+                await self.bot.change_presence(activity=discord.Game(name=f"Online! | {round(self.bot.latency * 1000, 3)}ms | {t}"), status=discord.Status.online)
             except:
                 self.bot.logger.info("WebStatus: Failed!")
                 await self.bot.change_presence(activity=discord.Game(name="WEBSITE DOWN"), status=discord.Status.do_not_disturb)
