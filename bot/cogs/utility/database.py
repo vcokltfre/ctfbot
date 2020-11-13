@@ -12,7 +12,7 @@ def argparse(possible: list, text: str):
     args = []
     for arg in possible:
         if arg in text:
-            text.replace(arg, "")
+            text = text.replace(arg, "")
             args.append(arg.replace("--", ""))
     return args, text
 
