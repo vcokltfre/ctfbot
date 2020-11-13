@@ -3,3 +3,5 @@ termcolor
 discord.py==1.5.0
 jishaku
 aioredis
+aiomysql
+aiohttp
