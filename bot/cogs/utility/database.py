@@ -29,7 +29,7 @@ class Database(commands.Cog):
         if not hasattr(self.bot, "pool"):
             for i in range(3):
                 try:
-                    self.bot.pool = await aiomysql.create_pool(**maria, loop=asyncio.get_event_loop())
+                    self.bot.pool = await aiomysql.create_pool(**maria, loop=asyncio.get_event_loop(), autocommit=True)
                     self.bot.logger.info("MariaDB Connected!")
                     break
                 except Exception as e:
@@ -47,7 +47,7 @@ class Database(commands.Cog):
         async with self.bot.pool.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(query)
-                await conn.commit()
+                #await conn.commit()
                 if "desc" in args:
                     await ctx.send(cur.description)
                     return
