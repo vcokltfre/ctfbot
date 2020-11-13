@@ -142,7 +142,7 @@ class General(commands.Cog):
             resp = await sess.get("https://ctf.vcokltf.re/ping")
             try:
                 data = await resp.json()
-                self.bot.logger.info("WebStatus: Success!")
+                self.bot.logger.debug("WebStatus: Success!")
                 await self.bot.change_presence(activity=discord.Game(name=f"Online! | {round(self.bot.latency * 1000, 3)}ms"), status=discord.Status.online)
             except:
                 self.bot.logger.info("WebStatus: Failed!")
