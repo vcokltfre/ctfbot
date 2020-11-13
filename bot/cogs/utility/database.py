@@ -63,11 +63,11 @@ class Database(commands.Cog):
     async def update_roles_task(self):
         async with self.bot.pool.acquire() as conn:
             async with conn.cursor() as cur:
-                await cur.execute(GET_ROLES) # Get list of all ctf roles
+                await cur.execute(GET_ROLES) # Get list of all ctf roles ('rid',)
                 r = await cur.fetchall()
                 r = [int(r[0]) for r in r]
 
-                await cur.execute(GET_UR) # Get list of users and ctf roles they should have
+                await cur.execute(GET_UR) # Get list of users and ctf roles they should have (iuid, 'uid', 'rid',)
                 u = await cur.fetchall()
 
                 await self.update_roles(r, u) # Update the users with the roles required
