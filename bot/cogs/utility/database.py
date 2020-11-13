@@ -41,6 +41,7 @@ class Database(commands.Cog):
                 if "all" in args:
                     r = await cur.fetchall()
                     await ctx.send("```py\n" + '\n'.join('{}: {}'.format(*k) for k in enumerate(r)) + "```")
+                    return
                 (r,) = await cur.fetchone()
                 await ctx.send(r)
 
