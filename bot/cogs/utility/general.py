@@ -1,4 +1,5 @@
 import time
+import aioredis
 from discord.ext import commands
 
 from bot.bot import Bot
@@ -87,9 +88,27 @@ class General(commands.Cog):
         await m.edit(
             content=f"Pong!\nMessage edit RTT: {round(rtt * 1000, 2)}ms\nWebsocket Latency: {round(self.bot.latency * 1000, 2)}ms")
 
+    @commands.group(name="redis", aliases=["r"])
+    @is_dev()
+    async def redis_g(self, ctx: commands.Context):
+        pass
+
+    @redis_g.command(name="set")
+    async def redis_set(self, ctx: commands.context, key: str, *, value: str):
+        await self.bot.redis.execute("set", "ctf" + key, value)
+        await ctx.send(f"OK: {key}: {value}")
+
+    @redis_g.command(name="get")
+    async def redis_get(self, ctx: commands.Context, key: str):
+        data = await self.bot.redis.execute("get", "ctf" + key)
+        await ctx.send(f"OK: {data.decode('utf-8')}")
+
     @commands.Cog.listener()
     async def on_ready(self):
         self.bot.logger.info(f"{name} has started")
+
+        if not hasattr(self.bot, "redis"):
+            self.bot.redis = await aioredis.create_connection("redis://localhost:6379")
 
 
 def setup(bot: Bot):
