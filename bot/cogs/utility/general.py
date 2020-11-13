@@ -131,7 +131,7 @@ class General(commands.Cog):
     async def on_message(self, m):
         if RESTART[0] and m.channel.id == RESTART[1]:
             self.bot.logger.info("Auto restarting due to git push event.")
-            await self.bot.change_presence(activity=discord.Game(name="Restarting"))
+            await self.bot.change_presence(activity=discord.Game(name="Restarting..."))
             await self.bot.logout()
 
 
