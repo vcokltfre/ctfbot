@@ -63,6 +63,9 @@ class Database(commands.Cog):
                         await ctx.send(pages[i])
                 except:
                     await ctx.send(f"```\n{traceback.format_exc(limit=1950)}```")
+                    await ctx.message.add_reaction("👎")
+                else:
+                    await ctx.message.add_reaction("👍")
 
     @tasks.loop(seconds=60)
     async def update_roles_task(self):
