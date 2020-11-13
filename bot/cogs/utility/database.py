@@ -1,21 +1,17 @@
 import asyncio
 import aiomysql
 import discord
-from aioredis.pubsub import Receiver
-from discord.ext import commands
+import traceback
+from discord.ext import commands, tasks
+from discord.utils import get
+from collections import defaultdict
 
 from bot.bot import Bot
 from bot.utils.checks import is_dev
+from bot.utils.roles import get_add_remove, get_rolemap
+from bot.utils.const import GET_UR, GET_ROLES
+from bot.utils.utils import argparse
 from config.config import maria
-
-def argparse(possible: list, text: str):
-    possible = [f"--{p}" for p in possible]
-    args = []
-    for arg in possible:
-        if arg in text:
-            text = text.replace(arg, "")
-            args.append(arg.replace("--", ""))
-    return args, text
 
 
 class Database(commands.Cog):
@@ -39,6 +35,7 @@ class Database(commands.Cog):
                         self.bot.logger.critical("MariaDB refused to connect 3 times. Restart.")
                         await self.bot.change_presence(activity=discord.Game(name="Restarting..."))
                         await self.bot.logout()
+        self.update_roles_task.start()
 
     @commands.command(name="db")
     @is_dev()
@@ -47,7 +44,6 @@ class Database(commands.Cog):
         async with self.bot.pool.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(query)
-                #await conn.commit()
                 if "desc" in args:
                     await ctx.send(cur.description)
                     return
@@ -58,6 +54,49 @@ class Database(commands.Cog):
                 r = await cur.fetchall()
                 text = "```py\n" + '\n'.join('{}: {}'.format(*k) for k in enumerate(r)) + "```"
                 await ctx.send(text[:1999])
+
+    @tasks.loop(seconds=60)
+    async def update_roles_task(self):
+        async with self.bot.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(GET_ROLES) # Get list of all ctf roles
+                r = await cur.fetchall()
+                r = [int(r[0]) for r in r]
+
+                await cur.execute(GET_UR) # Get list of users and ctf roles they should have
+                u = await cur.fetchall()
+
+                await self.update_roles(r, u) # Update the users with the roles required
+
+    async def update_roles(self, roleids: tuple, userinfo: tuple):
+        guild = get(self.bot.guilds, id=776588050276024371)
+
+        users = defaultdict(list)
+        for _, uid, rid in userinfo:
+            uid = int(uid)
+            user = get(guild.members, id=uid)
+
+            if user:
+                if rid is None:
+                    users[user] = []
+                    continue
+
+                rid = int(rid)
+                users[user].append(rid)
+
+        for user, roles in users.items():
+            try:
+                cur = [r.id for r in user.roles]
+                a, r = get_add_remove(cur, roleids, roles, get_rolemap(guild))
+                await self.update_user_roles(user, a, r)
+            except Exception as e:
+                self.bot.logger.error(f"AutoRole: {traceback.format_exc(limit=1970)}")
+
+    async def update_user_roles(self, user: discord.Member, add: list, remove: list):
+        if add or remove:
+            if add: await user.add_roles(*add)
+            if remove: await user.remove_roles(*remove)
+            self.bot.logger.info(f"AutoRole({user}): Added: {', '.join([role.name for role in add])} | Removed: {', '.join([role.name for role in remove])}")
 
 
 def setup(bot: Bot):
