@@ -1,5 +1,4 @@
 import asyncio
-from logging import lastResort
 import aiomysql
 import discord
 import traceback
