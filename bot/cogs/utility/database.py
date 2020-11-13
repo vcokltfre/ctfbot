@@ -44,20 +44,23 @@ class Database(commands.Cog):
         args, query = argparse(["desc", "one"], query)
         async with self.bot.pool.acquire() as conn:
             async with conn.cursor() as cur:
-                await cur.execute(query)
-                if "desc" in args:
-                    await ctx.send(cur.description)
-                    return
-                if "one" in args:
-                    (r,) = await cur.fetchone()
-                    await ctx.send(r)
-                    return
-                r = await cur.fetchall()
-                lines = ['{}: {}'.format(*k) for k in enumerate(r)]
-                pages = paginate(lines)
-                n = len(pages) if len(pages) <= 5 else 5
-                for i in range(n):
-                    await ctx.send(pages[i])
+                try:
+                    await cur.execute(query)
+                    if "desc" in args:
+                        await ctx.send(cur.description)
+                        return
+                    if "one" in args:
+                        (r,) = await cur.fetchone()
+                        await ctx.send(r)
+                        return
+                    r = await cur.fetchall()
+                    lines = ['{}: {}'.format(*k) for k in enumerate(r)]
+                    pages = paginate(lines)
+                    n = len(pages) if len(pages) <= 5 else 5
+                    for i in range(n):
+                        await ctx.send(pages[i])
+                except:
+                    await ctx.send(f"```\n{traceback.format_exc(limit=1950)}```")
 
     @tasks.loop(seconds=60)
     async def update_roles_task(self):
