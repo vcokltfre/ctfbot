@@ -1,7 +1,9 @@
 import asyncio
+from logging import lastResort
 import aiomysql
 import discord
 import traceback
+import tabulate
 from discord.ext import commands, tasks
 from discord.utils import get
 from collections import defaultdict
@@ -27,7 +29,7 @@ class Database(commands.Cog):
             await asyncio.sleep(1)
             for i in range(3):
                 try:
-                    self.bot.pool = await aiomysql.create_pool(**maria, loop=asyncio.get_event_loop(), autocommit=True)
+                    self.bot.pool = await aiomysql.create_pool(**maria, loop=asyncio.get_event_loop(), cursorclass=aiomysql.DictCursor, autocommit=True)
                     self.bot.logger.info("MariaDB Connected!")
                     break
                 except Exception as e:
@@ -52,12 +54,22 @@ class Database(commands.Cog):
                         await ctx.send(cur.description)
                         return
                     if "one" in args:
-                        (r,) = await cur.fetchone()
+                        r = await cur.fetchone()
                         await ctx.send(r)
                         return
                     r = await cur.fetchall()
-                    lines = ['{}: {}'.format(*k) for k in enumerate(r)]
-                    pages = paginate(lines)
+                    if len(r) == 0:
+                        lines = 'Query returned empty result.\n'
+                        if cur.lastrowid is not None and cur.lastrowid > 0:
+                            lines += f"lastrowid = {cur.lastrowid}\n"
+                        if cur.rowcount >= 0:
+                            lines += f"rowcount = {cur.rowcount}\n"
+                        lines = lines.strip()
+                    else:
+                        header = r[0].keys()
+                        rows = [x.values() for x in r]
+                        lines = tabulate.tabulate(rows, header, tablefmt='simple', showindex=True)
+                    pages = paginate(lines.split('\n'), lang='yml')
                     n = len(pages) if len(pages) <= 5 else 5
                     for i in range(n):
                         await ctx.send(pages[i])
@@ -71,29 +83,30 @@ class Database(commands.Cog):
     async def update_roles_task(self):
         async with self.bot.pool.acquire() as conn:
             async with conn.cursor() as cur:
-                await cur.execute(GET_ROLES) # Get list of all ctf roles ('rid',)
+                await cur.execute(GET_ROLES) # Get list of all ctf roles : { discord_role }
                 r = await cur.fetchall()
-                r = [int(r[0]) for r in r]
+                r = [int(r['discord_role']) for r in r]
 
-                await cur.execute(GET_UR) # Get list of users and ctf roles they should have (iuid, 'uid', 'rid',)
+                await cur.execute(GET_UR) # Get list of users and ctf roles they should have : { id, discord_id, discord_role }
                 u = await cur.fetchall()
 
                 await self.update_roles(r, u) # Update the users with the roles required
 
-    async def update_roles(self, roleids: tuple, userinfo: tuple):
+    async def update_roles(self, roleids: tuple, userinfo: dict):
         guild = get(self.bot.guilds, id=776588050276024371)
 
         users = defaultdict(list)
-        for _, uid, rid in userinfo:
-            uid = int(uid)
+
+        for entry in userinfo:
+            uid = int(entry['discord_id'])
             user = get(guild.members, id=uid)
 
             if user:
-                if rid is None:
+                if entry['discord_role'] is None:
                     users[user] = []
                     continue
 
-                rid = int(rid)
+                rid = int(entry['discord_role'])
                 users[user].append(rid)
 
         for user, roles in users.items():
