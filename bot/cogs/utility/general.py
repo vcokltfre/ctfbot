@@ -143,10 +143,10 @@ class General(commands.Cog):
             try:
                 data = await resp.json()
                 self.bot.logger.info("WebStatus: Success!")
-                await self.bot.change_presence(activity=discord.Game(name=f"Online! | {round(self.bot.latency * 1000, 3)}ms"))
+                await self.bot.change_presence(activity=discord.Game(name=f"Online! | {round(self.bot.latency * 1000, 3)}ms"), status=discord.Status.online)
             except:
                 self.bot.logger.info("WebStatus: Failed!")
-                await self.bot.change_presence(activity=discord.Game(name="WEBSITE DOWN"))
+                await self.bot.change_presence(activity=discord.Game(name="WEBSITE DOWN"), status=discord.Status.do_not_disturb)
 
 
 def setup(bot: Bot):
