@@ -1,5 +1,6 @@
 import time
 import aioredis
+import discord
 from discord.ext import commands
 
 from bot.bot import Bot
@@ -121,6 +122,7 @@ class General(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.bot.logger.info(f"{name} has started")
+        await self.bot.change_presence(activity=discord.Game(name=f"Online! | {round(self.bot.latency * 1000, 3)}ms"))
 
         if not hasattr(self.bot, "redis"):
             self.bot.redis = await aioredis.create_connection("redis://localhost:6379")
@@ -129,6 +131,7 @@ class General(commands.Cog):
     async def on_message(self, m):
         if RESTART[0] and m.channel.id == RESTART[1]:
             self.bot.logger.info("Auto restarting due to git push event.")
+            await self.bot.change_presence(activity=discord.Game(name="Restarting"))
             await self.bot.logout()
 
 
