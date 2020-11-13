@@ -4,8 +4,8 @@ def paginate(lines: list, maxlen: int = 2000):
 
     for line in lines:
         if not page[0]:
-            page[0].append("```py")
-            page[1] += 10
+            page[0].append("```yml")
+            page[1] += 11
         if len(line) + 1 + page[1] <= maxlen:
             page[0].append(line)
             page[1] += len(line) + 1
