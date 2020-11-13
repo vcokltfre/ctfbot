@@ -2,8 +2,9 @@ import asyncio
 from logging import lastResort
 import aiomysql
 import discord
-import traceback
 import tabulate
+import textwrap
+import traceback
 from discord.ext import commands, tasks
 from discord.utils import get
 from collections import defaultdict
@@ -67,7 +68,8 @@ class Database(commands.Cog):
                         lines = lines.strip()
                     else:
                         header = r[0].keys()
-                        rows = [x.values() for x in r]
+                        rows = [["\n".join(textwrap.wrap(y, 50)) if isinstance(y,str) else y for y in x.values()] for x in r]
+                        # rows = [x.values() for x in r]
                         lines = tabulate.tabulate(rows, header, tablefmt='simple', showindex=True)
                     pages = paginate(lines.split('\n'), lang='yml')
                     n = len(pages) if len(pages) <= 5 else 5
