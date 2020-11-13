@@ -110,6 +110,7 @@ class General(commands.Cog):
 
     @redis_g.command(name="raw")
     async def redis_raw(self, ctx: commands.Context, *args):
+        args = list(args)
         data = await self.bot.redis.execute(args.pop(0), *args)
         await ctx.send(str(data))
 
