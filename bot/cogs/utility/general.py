@@ -140,7 +140,7 @@ class General(commands.Cog):
     @tasks.loop(seconds=30)
     async def website_status_check(self):
         async with aiohttp.ClientSession() as sess:
-            resp = await sess.get("https://ctf.vcokltf.re/ping")
+            resp = await sess.get("https://ctf.vcokltf.re/ping", headers={"User-Agent": "discordbot"})
             try:
                 data = await resp.json()
                 self.bot.logger.debug("WebStatus: Success!")
