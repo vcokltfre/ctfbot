@@ -10,7 +10,7 @@ from collections import defaultdict
 from bot.bot import Bot
 from bot.utils.checks import is_dev
 from bot.utils.roles import get_add_remove, get_rolemap
-from bot.utils.const import GET_UR, GET_ROLES, LEADERBOARD
+from bot.utils.const import GET_UR, GET_ROLES, LEADERBOARD, COMPLETED
 from bot.utils.utils import argparse
 from bot.utils.paginate import paginate
 from config.config import maria, dev_ids
@@ -110,6 +110,24 @@ class Database(commands.Cog):
         r = await self.bot.redis.execute("del", f"ctf:q:{key}")
         await ctx.send("OK" if r else "None")
 
+    @commands.command(name="completed", aliases=["comp"])
+    @commands.guild_only()
+    async def completed(self, ctx, member: discord.Member = None):
+        member = member if member else ctx.author
+        async with self.bot.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(COMPLETED, member.id)
+                r = await cur.fetchall()
+
+        header = ("Category", "Challenge", "Points")
+        rows = [(a["category"], a["challenge"], a["points"]) for a in r]
+        lines = tabulate.tabulate(rows, header, tablefmt='simple', showindex=True)
+        lines = f"Challenges completed by {member}:\n\n" + lines
+        pages = paginate(lines.split('\n'), lang='yml')
+        n = len(pages) if len(pages) <= 5 else 5
+        for i in range(n):
+            await ctx.send(pages[i])
+
     @tasks.loop(seconds=60)
     async def update_roles_task(self):
         async with self.bot.pool.acquire() as conn:
@@ -177,7 +195,7 @@ class Database(commands.Cog):
 
         header = ["User", "Score"]
         lines = tabulate.tabulate(valid_users, header, tablefmt='simple', showindex=True)
-        text = "```" + lines + "```"
+        text = "```yml\n" + lines + "```"
         await ctx.send(text)
 
 
