@@ -41,21 +41,11 @@ class Database(commands.Cog):
                 await asyncio.sleep(2)
         self.update_roles_task.start()
 
-    @commands.command(name="db")
-    @is_dev()
-    async def db(self, ctx: commands.Context, *, query: str):
-        args, query = argparse(["desc", "one"], query)
+    async def execute_query(self, ctx, query):
         async with self.bot.pool.acquire() as conn:
             async with conn.cursor() as cur:
                 try:
                     await cur.execute(query)
-                    if "desc" in args:
-                        await ctx.send(cur.description)
-                        return
-                    if "one" in args:
-                        r = await cur.fetchone()
-                        await ctx.send(r)
-                        return
                     r = await cur.fetchall()
                     if len(r) == 0:
                         lines = 'Query returned empty result.\n'
@@ -77,6 +67,48 @@ class Database(commands.Cog):
                     await ctx.message.add_reaction("👎")
                 else:
                     await ctx.message.add_reaction("👍")
+
+    @commands.command(name="db")
+    @is_dev()
+    async def db(self, ctx: commands.Context, *, query: str):
+        await self.execute_query(ctx, query)
+
+    @commands.group(name="query", aliases=["q"])
+    @is_dev()
+    async def queryg(self, ctx: commands.Context):
+        pass
+
+    @queryg.command(name="set", aliases=["s"])
+    async def qset(self, ctx, key, *, value):
+        r = await self.bot.redis.execute("set", f"ctf:q:{key}", value)
+        await ctx.send(r.decode("utf-8"))
+
+    @queryg.command(name="run", aliases=["r"])
+    async def qrun(self, ctx, key):
+        r = await self.bot.redis.execute("get", f"ctf:q:{key}")
+        q = r.decode("utf-8")
+        await self.execute_query(ctx, q)
+
+    @queryg.command(name="show", aliases=["sh"])
+    async def qshow(self, ctx, key):
+        r = await self.bot.redis.execute("get", f"ctf:q:{key}")
+        q = r.decode("utf-8")
+        await ctx.send(f"```sql\n{q}```")
+
+    @queryg.command(name="list", aliases=["l"])
+    async def qlist(self, ctx):
+        r = await self.bot.redis.execute("keys", "*")
+        valid = []
+        for item in r:
+            item = item.decode("utf-8")
+            if item.startswith("ctf:q:"):
+                valid.append(item.replace("ctf:q:", ""))
+        await ctx.send(f"```{', '.join(valid)}```")
+
+    @queryg.command(name="delete", aliases=["d"])
+    async def qdel(self, ctx, key):
+        r = await self.bot.redis.execute("del", f"ctf:q:{key}")
+        await ctx.send("OK" if r else "None")
 
     @tasks.loop(seconds=60)
     async def update_roles_task(self):
