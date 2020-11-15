@@ -1,4 +1,14 @@
-def paginate(lines: list, maxlen: int = 2000, lang=''):
+import re
+
+flag = re.compile(r"Elem{[a-zA-Z0-9]{18}}")
+
+def paginate(lines_in: list, maxlen: int = 2000, lang=''):
+    lines = []
+    for line in lines_in:
+        for match in flag.findall(line):
+            print(match)
+            line = line.replace(match, "Elem{" + 'X' * 18 + "}")
+        lines.append(line)
     pages = []
 
     current_page = [];
