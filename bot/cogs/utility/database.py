@@ -182,20 +182,31 @@ class Database(commands.Cog):
                 users = await cur.fetchall()
 
         valid_users = []
-        for user in users:
+        found = False
+        fuser = None
+        additional = ""
+        for i, user in enumerate(users):
             points = int(user['points'])
             user = get(guild.members, id=int(user['discord_id']))
-            if user and len(valid_users) < 10:
+            if user and len(valid_users) < 15:
                 name = str(user)
                 if user.id in dev_ids:
                     name += "*"
                 if user.id == ctx.author.id:
                     name += " <-- You"
+                    found = True
                 valid_users.append((name, points))
+
+            if user and user.id == ctx.author.id:
+                fuser = (i, points)
+
+        if not found:
+            additional = f"\nYou are at place {fuser[0]} and have {fuser[1]} points."
 
         header = ["User", "Score"]
         lines = tabulate.tabulate(valid_users, header, tablefmt='simple', showindex=True)
-        text = "```yml\n" + lines + "```"
+        l = len(lines.split("\n")[0])
+        text = "```yml\n" + lines + "\n" + "-"*l + additional + "```"
         await ctx.send(text)
 
 
